@@ -1,22 +1,45 @@
+using System.Diagnostics;
 using MyMonkeyApp;
 
 namespace MyMonkeyApp;
 
 /// <summary>
-/// Main program class for the Monkey Console Application.
+/// High-performance main program class for the Monkey Console Application.
+/// Optimized for fast startup, minimal memory allocation, and responsive UI.
 /// </summary>
 class Program
 {
     private static readonly Random _random = new();
+    private static readonly Stopwatch _performanceTimer = Stopwatch.StartNew();
+    private static int _menuSelections = 0;
 
     /// <summary>
-    /// Main entry point for the application.
+    /// High-performance main entry point with startup optimization.
     /// </summary>
     /// <param name="args">Command line arguments.</param>
     static void Main(string[] args)
     {
+        // Pre-warm the MonkeyHelper for faster first access
+        _ = Task.Run(() => MonkeyHelper.InitializeMonkeyData());
+        
         DisplayWelcomeBanner();
         RunMainMenu();
+        
+        // Display final performance stats
+        DisplayPerformanceStats();
+    }
+
+    /// <summary>
+    /// Displays startup performance statistics.
+    /// </summary>
+    static void DisplayPerformanceStats()
+    {
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("\n🚀 Performance Summary:");
+        Console.WriteLine($"   • Session Duration: {_performanceTimer.Elapsed.TotalSeconds:F1}s");
+        Console.WriteLine($"   • Menu Selections: {_menuSelections}");
+        Console.WriteLine($"   • Memory Usage: {GC.GetTotalMemory(false) / 1024:N0} KB");
+        Console.ResetColor();
     }
 
     /// <summary>
@@ -118,11 +141,12 @@ class Program
     }
 
     /// <summary>
-    /// Runs the main interactive menu loop.
+    /// High-performance main interactive menu loop with optimization.
     /// </summary>
     static void RunMainMenu()
     {
         bool continueRunning = true;
+        Span<char> inputBuffer = stackalloc char[10]; // Stack allocation for input
 
         while (continueRunning)
         {
@@ -130,6 +154,7 @@ class Program
             {
                 DisplayMainMenu();
                 var choice = GetUserChoice();
+                _menuSelections++; // Track usage for performance stats
 
                 switch (choice)
                 {
@@ -143,12 +168,16 @@ class Program
                         DisplayRandomMonkey();
                         break;
                     case "4":
+                        DisplayPerformanceReport(); // Show performance before exit
                         DisplayExitMessage();
                         continueRunning = false;
                         break;
+                    case "5": // New performance menu option
+                        DisplayPerformanceReport();
+                        break;
                     default:
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Invalid choice. Please select 1-4.");
+                        Console.WriteLine("❌ Invalid choice. Please select 1-5.");
                         Console.ResetColor();
                         break;
                 }
@@ -171,7 +200,7 @@ class Program
     }
 
     /// <summary>
-    /// Displays the main menu options with statistics.
+    /// Displays the high-performance main menu with enhanced options and real-time stats.
     /// </summary>
     static void DisplayMainMenu()
     {
@@ -181,22 +210,27 @@ class Program
         DisplayRandomMenuArt();
         
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("🐵 MONKEY SPECIES EXPLORER MENU 🐒");
-        Console.WriteLine("==================================");
+        Console.WriteLine("� HIGH-PERFORMANCE MONKEY EXPLORER 🐒");
+        Console.WriteLine("======================================");
         Console.ResetColor();
         Console.WriteLine();
-        Console.WriteLine("1. 📋 List all monkey species");
-        Console.WriteLine("2. 🔍 Search for a specific monkey");
-        Console.WriteLine("3. 🎲 Get a random monkey");
-        Console.WriteLine("4. 🚪 Exit");
+        Console.WriteLine("1. 📋 List all monkey species (Optimized)");
+        Console.WriteLine("2. 🔍 Smart search with fuzzy matching");
+        Console.WriteLine("3. 🎲 Get a random monkey (Thread-safe)");
+        Console.WriteLine("4. 🚪 Exit with performance summary");
+        Console.WriteLine("5. ⚡ View performance analytics");
         Console.WriteLine();
         
-        // Display statistics
+        // Enhanced real-time statistics
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.WriteLine($"📊 Stats: {MonkeyHelper.GetMonkeyCount()} species available | Random selections: {MonkeyHelper.RandomMonkeyAccessCount}");
+        var stats = MonkeyHelper.GetPerformanceMetrics();
+        Console.WriteLine($"📊 Performance: {MonkeyHelper.GetMonkeyCount()} species | " +
+                         $"Avg Query: {stats.AverageQueryTimeMs}ms | " +
+                         $"Cache Hit: {stats.CacheHitRatio:P1} | " +
+                         $"Random: {MonkeyHelper.RandomMonkeyAccessCount}");
         Console.ResetColor();
         Console.WriteLine();
-        Console.Write("Please enter your choice (1-4): ");
+        Console.Write("Please enter your choice (1-5): ");
     }
 
     /// <summary>
@@ -269,14 +303,14 @@ class Program
     }
 
     /// <summary>
-    /// Allows the user to search for a specific monkey by name.
+    /// Advanced smart search with fuzzy matching and performance tracking.
     /// </summary>
     static void SearchMonkeyByName()
     {
         Console.Clear();
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("🔍 SEARCH FOR A MONKEY");
-        Console.WriteLine("=====================");
+        Console.WriteLine("🧠 SMART MONKEY SEARCH (Fuzzy Matching)");
+        Console.WriteLine("======================================");
         Console.ResetColor();
         Console.WriteLine();
         Console.Write("Enter the monkey name to search for: ");
@@ -286,33 +320,80 @@ class Program
         if (string.IsNullOrWhiteSpace(searchName))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Please enter a valid monkey name.");
+            Console.WriteLine("❌ Please enter a valid monkey name.");
             Console.ResetColor();
             return;
         }
 
-        var monkey = MonkeyHelper.GetMonkeyByName(searchName);
+        var sw = Stopwatch.StartNew();
         
-        if (monkey != null)
+        // Try exact match first (fastest)
+        var exactMatch = MonkeyHelper.GetMonkeyByName(searchName);
+        
+        if (exactMatch != null)
         {
+            sw.Stop();
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("🐵 MONKEY FOUND!");
+            Console.WriteLine($"🎯 EXACT MATCH FOUND! (Search time: {sw.ElapsedMilliseconds}ms)");
             Console.ResetColor();
-            DisplayMonkeyDetails(monkey);
+            DisplayMonkeyDetails(exactMatch);
+            return;
+        }
+
+        // Try fuzzy search for approximate matches
+        var fuzzyResults = MonkeyHelper.FuzzySearchMonkeys(searchName, maxDistance: 3);
+        sw.Stop();
+        
+        if (fuzzyResults.Count > 0)
+        {
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"🔍 FUZZY MATCHES FOUND! (Search time: {sw.ElapsedMilliseconds}ms)");
+            Console.WriteLine($"Found {fuzzyResults.Count} similar matches:");
+            Console.ResetColor();
+            Console.WriteLine();
+
+            for (int i = 0; i < Math.Min(fuzzyResults.Count, 5); i++) // Show top 5 matches
+            {
+                var (monkey, distance) = fuzzyResults[i];
+                var similarity = Math.Max(0, 100 - (distance * 10)); // Simple similarity percentage
+                
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"{i + 1}. {monkey.Name} (Similarity: {similarity}%)");
+                Console.ResetColor();
+                Console.WriteLine($"   📍 {monkey.Location}");
+                Console.WriteLine($"   � Population: {monkey.Population:N0}");
+                Console.WriteLine();
+            }
+
+            Console.Write("Enter the number of the monkey you want to see (1-5), or 0 to go back: ");
+            var choice = Console.ReadLine();
+            
+            if (int.TryParse(choice, out int index) && index > 0 && index <= Math.Min(fuzzyResults.Count, 5))
+            {
+                Console.WriteLine();
+                DisplayMonkeyDetails(fuzzyResults[index - 1].Monkey);
+            }
         }
         else
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"😞 No monkey found with the name '{searchName}'.");
+            Console.WriteLine($"😞 No similar matches found for '{searchName}'. (Search time: {sw.ElapsedMilliseconds}ms)");
             Console.ResetColor();
             Console.WriteLine();
-            Console.WriteLine("Available monkey species:");
-            var monkeys = MonkeyHelper.GetMonkeys();
-            foreach (var m in monkeys)
+            
+            // Show a few random suggestions
+            Console.WriteLine("💡 Try searching for these popular species:");
+            var randomSuggestions = MonkeyHelper.GetMonkeysAsSpan().ToArray()
+                .OrderBy(x => Guid.NewGuid())
+                .Take(5)
+                .ToList();
+                
+            foreach (var suggestion in randomSuggestions)
             {
-                Console.WriteLine($"  • {m.Name}");
+                Console.WriteLine($"  • {suggestion.Name}");
             }
         }
     }
@@ -421,6 +502,97 @@ class Program
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("📊 SESSION STATISTICS:");
         Console.WriteLine(MonkeyHelper.GetCollectionStats());
+        Console.ResetColor();
+    }
+
+    /// <summary>
+    /// Displays comprehensive performance analytics and optimization insights.
+    /// </summary>
+    static void DisplayPerformanceReport()
+    {
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("⚡ PERFORMANCE ANALYTICS DASHBOARD ⚡");
+        Console.WriteLine("====================================");
+        Console.ResetColor();
+        Console.WriteLine();
+
+        var stats = MonkeyHelper.GetPerformanceMetrics();
+        var sessionTime = _performanceTimer.Elapsed;
+        var memoryUsage = GC.GetTotalMemory(false);
+
+        // Real-time performance metrics
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("🚀 Real-Time Performance Metrics:");
+        Console.ResetColor();
+        Console.WriteLine($"   • Average Query Time: {stats.AverageQueryTimeMs}ms");
+        Console.WriteLine($"   • Total Queries Executed: {stats.TotalQueries}");
+        Console.WriteLine($"   • Cache Hit Ratio: {stats.CacheHitRatio:P2}");
+        Console.WriteLine($"   • Memory Usage: {memoryUsage / 1024:N0} KB");
+        Console.WriteLine();
+
+        // Session analytics
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("📈 Session Analytics:");
+        Console.ResetColor();
+        Console.WriteLine($"   • Session Duration: {sessionTime.TotalSeconds:F1} seconds");
+        Console.WriteLine($"   • Menu Interactions: {_menuSelections}");
+        Console.WriteLine($"   • Random Monkey Requests: {MonkeyHelper.RandomMonkeyAccessCount}");
+        Console.WriteLine($"   • Operations per Second: {(_menuSelections / Math.Max(sessionTime.TotalSeconds, 1)):F1}");
+        Console.WriteLine();
+
+        // Optimization recommendations
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("💡 Performance Insights:");
+        Console.ResetColor();
+        
+        if (stats.CacheHitRatio > 0.8)
+        {
+            Console.WriteLine("   ✅ Excellent cache performance - lookups are highly optimized!");
+        }
+        else if (stats.CacheHitRatio > 0.5)
+        {
+            Console.WriteLine("   ⚠️  Good cache performance - consider pre-warming more data.");
+        }
+        else
+        {
+            Console.WriteLine("   🔴 Cache efficiency could be improved - mostly cold starts detected.");
+        }
+
+        if (stats.AverageQueryTimeMs < 1)
+        {
+            Console.WriteLine("   ✅ Lightning-fast query performance!");
+        }
+        else if (stats.AverageQueryTimeMs < 5)
+        {
+            Console.WriteLine("   ⚠️  Query performance is acceptable.");
+        }
+        else
+        {
+            Console.WriteLine("   🔴 Queries are taking longer than optimal - check for bottlenecks.");
+        }
+
+        if (memoryUsage < 1024 * 1024) // 1MB
+        {
+            Console.WriteLine("   ✅ Memory usage is optimal for this application size.");
+        }
+        else
+        {
+            Console.WriteLine("   ⚠️  Memory usage is higher than expected - monitor for leaks.");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("📊 Detailed Collection Statistics:");
+        Console.WriteLine(MonkeyHelper.GetCollectionStats());
+        Console.WriteLine();
+        
+        // Performance tips
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("💡 Pro Tips for Optimal Performance:");
+        Console.WriteLine("   • Use fuzzy search to find species faster");
+        Console.WriteLine("   • Cache frequently accessed data automatically");
+        Console.WriteLine("   • Monitor memory usage in production environments");
+        Console.WriteLine("   • Consider async operations for larger datasets");
         Console.ResetColor();
     }
 }
