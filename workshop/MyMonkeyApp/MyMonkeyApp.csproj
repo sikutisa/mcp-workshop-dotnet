@@ -2,7 +2,10 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <!-- Target .NET 9 as specified in requirements -->
     <TargetFramework>net9.0</TargetFramework>
+    <!-- Enable C# 13 features as specified in requirements -->
+    <LangVersion>13.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

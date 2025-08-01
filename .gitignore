@@ -487,3 +487,5 @@ $RECYCLE.BIN/
 # .vscode/mcp.json
 # .vscode/settings.json
 # workshop/
+packages-microsoft-prod.deb
+dotnet-install.sh
