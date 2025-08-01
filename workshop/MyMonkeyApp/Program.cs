@@ -7,6 +7,8 @@ namespace MyMonkeyApp;
 /// </summary>
 class Program
 {
+    private static readonly Random _random = new();
+
     /// <summary>
     /// Main entry point for the application.
     /// </summary>
@@ -18,7 +20,7 @@ class Program
     }
 
     /// <summary>
-    /// Displays the ASCII art welcome banner.
+    /// Displays the ASCII art welcome banner with random monkey art.
     /// </summary>
     static void DisplayWelcomeBanner()
     {
@@ -38,7 +40,81 @@ class Program
         Console.WriteLine("        🐵 Welcome to the Monkey Species Explorer! 🐒");
         Console.WriteLine("        Discover amazing primates from around the world!");
         Console.ResetColor();
+        
+        // Display random ASCII art
+        DisplayRandomAsciiArt();
+        
         Console.WriteLine();
+        Console.WriteLine("Press any key to continue...");
+        Console.ReadKey();
+    }
+
+    /// <summary>
+    /// Displays random ASCII art of monkeys.
+    /// </summary>
+    static void DisplayRandomAsciiArt()
+    {
+        var asciiArts = new string[]
+        {
+            @"
+                        🐵
+                   .-""""""""-.
+                 .'          '.
+                /   O      O   \
+               :           `    :
+               |                |   
+               :    .------.    :
+                \  '        '  /
+                 '.          .'
+                   '-.......-'
+            ",
+            @"
+                   🐒 Monkey Business! 🐒
+                      ___
+                   .-'   '-.
+                  /  ._. ._. \
+                 |  (o)=(o)  |
+                  \    <    /
+                   |  ___  |
+                   |.'   '.|
+                   '-......-'
+            ",
+            @"
+                    🙈 See No Evil 🙈
+                      .-.   .-.
+                     (   )-(   )
+                      \ (   ) /
+                       |  -  |
+                       |  o  |
+                       |     |
+                       '-----'
+            ",
+            @"
+                    🙉 Hear No Evil 🙉
+                       .-''-.
+                      /      \
+                     |  ████  |
+                     |   oo   |
+                     |   ><   |
+                     |  \__/  |
+                      \______/
+            ",
+            @"
+                    🙊 Speak No Evil 🙊
+                       .-----.
+                      /       \
+                     |  ^   ^  |
+                     |    o    |
+                     |   ---   |
+                     |  \___/  |
+                      '-------'
+            "
+        };
+
+        var selectedArt = asciiArts[_random.Next(asciiArts.Length)];
+        Console.ForegroundColor = ConsoleColor.Magenta;
+        Console.WriteLine(selectedArt);
+        Console.ResetColor();
     }
 
     /// <summary>
@@ -67,8 +143,8 @@ class Program
                         DisplayRandomMonkey();
                         break;
                     case "4":
+                        DisplayExitMessage();
                         continueRunning = false;
-                        Console.WriteLine("Thanks for exploring! Goodbye! 🐵");
                         break;
                     default:
                         Console.ForegroundColor = ConsoleColor.Red;
@@ -95,11 +171,15 @@ class Program
     }
 
     /// <summary>
-    /// Displays the main menu options.
+    /// Displays the main menu options with statistics.
     /// </summary>
     static void DisplayMainMenu()
     {
         Console.Clear();
+        
+        // Random small ASCII art for the menu
+        DisplayRandomMenuArt();
+        
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("🐵 MONKEY SPECIES EXPLORER MENU 🐒");
         Console.WriteLine("==================================");
@@ -110,7 +190,34 @@ class Program
         Console.WriteLine("3. 🎲 Get a random monkey");
         Console.WriteLine("4. 🚪 Exit");
         Console.WriteLine();
+        
+        // Display statistics
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine($"📊 Stats: {MonkeyHelper.GetMonkeyCount()} species available | Random selections: {MonkeyHelper.RandomMonkeyAccessCount}");
+        Console.ResetColor();
+        Console.WriteLine();
         Console.Write("Please enter your choice (1-4): ");
+    }
+
+    /// <summary>
+    /// Displays random small ASCII art for the menu.
+    /// </summary>
+    static void DisplayRandomMenuArt()
+    {
+        var menuArts = new string[]
+        {
+            "    🐵🐒🐵",
+            "   🙈🙉🙊",
+            "    🐒💫🐵",
+            "   🌟🐵🌟",
+            "    🐒🎯🐵"
+        };
+
+        var selectedArt = menuArts[_random.Next(menuArts.Length)];
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine(selectedArt);
+        Console.ResetColor();
+        Console.WriteLine();
     }
 
     /// <summary>
@@ -145,12 +252,19 @@ class Program
             Console.ResetColor();
             Console.WriteLine($"   📍 Location: {monkey.Location}");
             Console.WriteLine($"   👥 Population: {monkey.Population:N0}");
-            Console.WriteLine($"   ℹ️  Details: {monkey.Details}");
+            Console.WriteLine($"   🌍 Coordinates: {monkey.Latitude:F2}°, {monkey.Longitude:F2}°");
+            
+            // Truncate details if too long
+            var details = monkey.Details.Length > 80 
+                ? monkey.Details[..77] + "..." 
+                : monkey.Details;
+            Console.WriteLine($"   ℹ️  Details: {details}");
             Console.WriteLine();
         }
 
         Console.ForegroundColor = ConsoleColor.Magenta;
-        Console.WriteLine($"Total species: {MonkeyHelper.GetMonkeyCount()}");
+        Console.WriteLine($"🎯 Total species: {MonkeyHelper.GetMonkeyCount()}");
+        Console.WriteLine(MonkeyHelper.GetCollectionStats());
         Console.ResetColor();
     }
 
@@ -204,7 +318,7 @@ class Program
     }
 
     /// <summary>
-    /// Displays a randomly selected monkey species.
+    /// Displays a randomly selected monkey species with fun animations.
     /// </summary>
     static void DisplayRandomMonkey()
     {
@@ -215,21 +329,44 @@ class Program
         Console.ResetColor();
         Console.WriteLine();
 
+        // Fun animation
+        Console.Write("🎯 Selecting a random monkey");
+        for (int i = 0; i < 3; i++)
+        {
+            Thread.Sleep(500);
+            Console.Write(".");
+        }
+        Console.WriteLine();
+        Console.WriteLine();
+
         var randomMonkey = MonkeyHelper.GetRandomMonkey();
         
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("🎉 Here's your random monkey:");
-        Console.ResetColor();
-        Console.WriteLine();
-        
-        DisplayMonkeyDetails(randomMonkey);
+        if (randomMonkey != null)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("🎉 Here's your random monkey:");
+            Console.ResetColor();
+            Console.WriteLine();
+            
+            DisplayMonkeyDetails(randomMonkey);
+            
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"📊 Total random selections: {MonkeyHelper.RandomMonkeyAccessCount}");
+            Console.ResetColor();
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("😞 No monkeys available for random selection.");
+            Console.ResetColor();
+        }
     }
 
     /// <summary>
     /// Displays detailed information about a specific monkey.
     /// </summary>
     /// <param name="monkey">The monkey to display details for.</param>
-    static void DisplayMonkeyDetails(Monkey monkey)
+    static void DisplayMonkeyDetails(Monkey? monkey)
     {
         if (monkey == null)
         {
@@ -246,6 +383,7 @@ class Program
         Console.WriteLine();
         Console.WriteLine($"📍 Location: {monkey.Location}");
         Console.WriteLine($"👥 Population: {monkey.Population:N0}");
+        Console.WriteLine($"🌍 Coordinates: {monkey.Latitude:F6}°, {monkey.Longitude:F6}°");
         Console.WriteLine($"ℹ️  Details: {monkey.Details}");
         
         if (!string.IsNullOrEmpty(monkey.Image))
@@ -253,5 +391,36 @@ class Program
             Console.WriteLine($"🖼️  Image: {monkey.Image}");
         }
         Console.WriteLine();
+    }
+
+    /// <summary>
+    /// Displays a fun exit message with ASCII art.
+    /// </summary>
+    static void DisplayExitMessage()
+    {
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine(@"
+    🐵 Thanks for exploring the monkey kingdom! 🐒
+    
+         .-""""""-.
+       .'          '.
+      /   Goodbye!   \
+     :      👋        :
+     |                |
+     :    .------.    :
+      \  '        '  /
+       '.          .'
+         '-.......-'
+         
+    🌟 Come back soon for more monkey adventures! 🌟
+        ");
+        Console.ResetColor();
+        
+        // Show final statistics
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("📊 SESSION STATISTICS:");
+        Console.WriteLine(MonkeyHelper.GetCollectionStats());
+        Console.ResetColor();
     }
 }
