@@ -483,7 +483,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-.github/copilot-instructions.md
-.vscode/mcp.json
-.vscode/settings.json
-workshop/
+# .github/copilot-instructions.md
+# .vscode/mcp.json
+# .vscode/settings.json
+# workshop/
